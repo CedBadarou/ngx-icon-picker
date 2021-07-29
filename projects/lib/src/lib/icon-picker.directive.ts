@@ -8,8 +8,11 @@ import {
   OnInit,
   Output,
   ReflectiveInjector,
-  ViewContainerRef
+  ViewContainerRef,
+  OnDestroy
 } from '@angular/core';
+import {Subscription, Subject} from 'rxjs';
+import {takeUntil} from 'rxjs/operators';
 
 import {IconPickerComponent} from './icon-picker.component';
 
@@ -21,7 +24,7 @@ import {IconPickerComponent} from './icon-picker.component';
     '(click)': 'onClick()'
   }
 })
-export class IconPickerDirective implements OnInit, OnChanges {
+export class IconPickerDirective implements OnInit, OnChanges, OnDestroy {
   @Input() iconPicker: string;
   @Input() ipPlaceHolder = 'Search icon...';
   @Input() ipPosition = 'right';
@@ -40,6 +43,11 @@ export class IconPickerDirective implements OnInit, OnChanges {
   @Input() ipInputSearchStyleClass = 'form-control input-sm';
 
   @Output() iconPickerSelect = new EventEmitter<string>(true);
+  @Output() initializeDialog = new EventEmitter<void>();
+  @Output() ready = new EventEmitter<void>();
+
+  readySub: Subscription;
+  unsubscribe$ = new Subject();
 
   private dialog: any;
   private created: boolean;
@@ -63,11 +71,16 @@ export class IconPickerDirective implements OnInit, OnChanges {
     this.iconPickerSelect.emit(this.iconPicker);
   }
 
+  ngOnDestroy() {
+    this.unsubscribe$.next();
+  }
+
   onClick() {
     this.openDialog();
   }
 
   openDialog() {
+    this.initializeDialog.emit();
     if (!this.created) {
       this.created = true;
       const vcRef = this.vcRef;
@@ -75,6 +88,13 @@ export class IconPickerDirective implements OnInit, OnChanges {
       // eslint-disable-next-line import/no-deprecated
       const injector = ReflectiveInjector.fromResolvedProviders([], vcRef.parentInjector);
       const cmpRef = vcRef.createComponent(compFactory, 0, injector, []);
+      this.readySub = cmpRef.instance.ready$
+        .pipe(
+          takeUntil(this.unsubscribe$),
+        )
+        .subscribe(() => {
+          this.ready.emit();
+        });
       cmpRef.instance.setDialog(this, this.el, this.iconPicker, this.ipPosition, this.ipHeight, this.ipMaxHeight,
         this.ipWidth, this.ipPlaceHolder, this.ipFallbackIcon, this.ipIconPack, this.ipIconSize,
         this.ipIconVerticalPadding, this.ipIconHorizontalPadding, this.ipButtonStyleClass, this.ipDivSearchStyleClass,

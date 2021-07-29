@@ -1,4 +1,5 @@
-import {ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild} from '@angular/core';
+import {ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild, Output, EventEmitter} from '@angular/core';
+import {Subject} from 'rxjs';
 
 import {IconPickerService} from './icon-picker.service';
 import {Icon, IconType} from './icon';
@@ -12,6 +13,9 @@ import {Icon, IconType} from './icon';
 
 export class IconPickerComponent implements OnInit {
   @ViewChild('dialogPopup') dialogElement: any;
+
+  @Output() initializeDialog = new EventEmitter<void>();
+  @Output() ready = new EventEmitter<void>();
 
   // Popover
   public ipPosition: string;
@@ -54,6 +58,7 @@ export class IconPickerComponent implements OnInit {
   private listenerResize: any;
 
   private dialogArrowSize = 10;
+  ready$ = new Subject();
 
   constructor(
     private el: ElementRef,
@@ -146,6 +151,7 @@ export class IconPickerComponent implements OnInit {
         this.setDialogPosition();
         this.hidden = false;
         this.cdr.detectChanges();
+        this.ready$.next();
       }, 0);
       document.addEventListener('mousedown', this.listenerMouseDown);
       window.addEventListener('resize', this.listenerResize);
