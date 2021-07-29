@@ -36,6 +36,9 @@ export class IconPickerComponent implements OnInit {
   public ipFallbackIcon: string;
   public ipIconPack: string[];
 
+  // Dialog ready subject
+  public ready$ = new Subject();
+
   public show: boolean;
   public hidden: boolean;
   public top: number;
@@ -58,7 +61,6 @@ export class IconPickerComponent implements OnInit {
   private listenerResize: any;
 
   private dialogArrowSize = 10;
-  ready$ = new Subject();
 
   constructor(
     private el: ElementRef,
