@@ -101,7 +101,7 @@ export class IconPickerComponent implements OnInit {
     this.icons = this.service.getIcons(this.ipIconPack);
     this.listenerMouseDown = (event: any) => this.onMouseDown(event);
     this.listenerResize = () => this.onResize();
-    this.openDialog(this.initialIcon);
+    this.openDialog(this.initialIcon, true);
   }
 
   setInitialIcon(icon: string) {
@@ -117,9 +117,9 @@ export class IconPickerComponent implements OnInit {
     }
   }
 
-  openDialog(icon: string) {
+  openDialog(icon: string, removeUnhandledIcons = false) {
     this.setInitialIcon(icon);
-    this.openIconPicker();
+    this.openIconPicker(removeUnhandledIcons);
   }
 
   setSearch(val: string) {
@@ -145,7 +145,7 @@ export class IconPickerComponent implements OnInit {
     }
   }
 
-  openIconPicker() {
+  openIconPicker(removeUnhandledIcons = false) {
     if (!this.show) {
       this.show = true;
       this.hidden = true;
@@ -153,6 +153,11 @@ export class IconPickerComponent implements OnInit {
         this.setDialogPosition();
         this.hidden = false;
         this.cdr.detectChanges();
+
+        if (removeUnhandledIcons) {
+          this.removeUnhandledIcons();
+        }
+
         this.ready$.next();
       }, 0);
       document.addEventListener('mousedown', this.listenerMouseDown);
@@ -244,5 +249,22 @@ export class IconPickerComponent implements OnInit {
       width: element.offsetWidth,
       height: element.offsetHeight
     };
+  }
+
+  private removeUnhandledIcons() {
+    this.icons = this.icons.filter((icon, i) => {
+      let keep = false;
+
+      const iconButton = document.getElementById('ip-button-icon-' + i);
+
+      if (iconButton) {
+        const iconElement = iconButton.children[0];
+
+        // @ts-ignore
+        keep = iconElement && iconElement.offsetHeight > 0;
+      }
+
+      return keep;
+    });
   }
 }
